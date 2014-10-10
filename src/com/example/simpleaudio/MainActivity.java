@@ -1,5 +1,7 @@
 package com.example.simpleaudio;
 
+import java.nio.Buffer;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,21 +17,19 @@ public class MainActivity extends Activity {
 
 	private boolean isSendering;
 	private static int BUFFER_FRAME_SIZE = 16000;
+//	Buffer buf = new CircularFifoBuffer(4);
 	short[] lin = new short [BUFFER_FRAME_SIZE];
-	short[] inbuffer  = new short[64];
-	short[] outbuffer = new short[128];
+	short[][] inbuffer  = new short[5][BUFFER_FRAME_SIZE];
+	short[] outbuffer = new short[2];
 	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        
+             
         createEngine();
         createAudioRecorder();
-		
 		createBufferQueueAudioPlayer();
-        
         
         ((Button) findViewById(R.id.start)).setOnClickListener(new OnClickListener() {
             public void onClick(View view) {
@@ -39,41 +39,75 @@ public class MainActivity extends Activity {
             	
             	Thread t = new Thread() {
             		@Override
-            		 public void run() {
+            		 public void run() {           			
             			
-            			
-            	    	while (isSendering) {
+//            			lin = startRecording();
+    	    			
+//            			for (int i = 0; i < 3; i++) {
+//            				inbuffer[i] = startRecording();
+//            				try {
+//    							Thread.sleep(1000);
+//    						} catch (InterruptedException e) {
+//    							// TODO Auto-generated catch block
+//    							e.printStackTrace();
+//    						}
+//            			}
+//        	    		
+//        	    		try {
+//							Thread.sleep(10000);
+//						} catch (InterruptedException e) {
+//							// TODO Auto-generated catch block
+//							e.printStackTrace();
+//						}
+        	    		
+//            	    	while (isSendering) {
             	    		Log.d("start", "record begin");	
             	    		
-//            	    		for (int i = 0; i < 100; i++) {
-            	    			lin = startRecording();
-//            	    		}
+//            	    		lin = startRecording();
+//            	    		
             	    		
-            	    		try {
-								Thread.sleep(2000);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}	
+            	    		
+//            	    		playBack(lin, BUFFER_FRAME_SIZE);
+            	    		
+            	    		
+//            	    		for (int i = 0; i < 5; i++) {
+            	    			setBuffer(startRecording(), 1);
+	            	    		
+            	    			lin = startRecording();
+            	    			try {
+        							Thread.sleep(2000);
+        						} catch (InterruptedException e) {
+        							// TODO Auto-generated catch block
+        							e.printStackTrace();
+        						}
+//            	    			setBuffer(lin, 2);\
+            	    			playBack(lin, BUFFER_FRAME_SIZE);
+            	    			Log.d("start", "got data, ready to play");
+//	            	    		lin = inbuffer[i];
+//	            	    		try {
+//	    							Thread.sleep(1000);
+//	    						} catch (InterruptedException e) {
+//	    							// TODO Auto-generated catch block
+//	    							e.printStackTrace();
+//	    						}
+	            	    		
+
+//            	    		}
+
             	    		
 //            	    		for (int i = 0, j = 0; i < 64; i++, j+=2) {
 //            	    			outbuffer[j] = outbuffer[j+1] = inbuffer[i];
 //            	    		}
-            	    		Log.d("start", "got data, ready to play");
-            	    		playBack(lin, BUFFER_FRAME_SIZE);
+
 //            	    		for (int i = 0; i < 100; i++) {
 //            	    			lin[i] = startRecording();
             	    			
 //            	    		}
             	    		
-            	    			
-
-            			}
+//            			}
             	    }
             	};
-            	t.start();
-
-                  	
+            	t.start();                 	
             }
         });
         
@@ -121,5 +155,7 @@ public class MainActivity extends Activity {
     public static native void createBufferQueueAudioPlayer();
     public static native void playBack(short[] lin, int decodeSize);
     public static native boolean createAudioRecorder();
+    public static native void setBuffer(short[] lin, int decodeSize);
     public static native short[] startRecording();
+   
 }

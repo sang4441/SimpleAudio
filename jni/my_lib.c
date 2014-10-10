@@ -65,14 +65,20 @@ static int nextCount;
 static const char hello[] =
 #include "hello_clip.h"
 ;
-
+static const char android[] =
+#include "android_clip.h"
+;
 // this callback handler is called every time a buffer finishes playing
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
     assert(bq == bqPlayerBufferQueue);
     assert(NULL == context);
+
+
     // for streaming playback, replace this test by logic to find and fill the next buffer
-    if (--nextCount > 0 && NULL != nextBuffer && 0 != nextSize) {
+	  int i;
+    if (NULL != nextBuffer && 0 != nextSize) {
+//	 for (i = 0; i < 3; i++) {
         SLresult result;
         // enqueue another buffer
         result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, nextBuffer, nextSize);
@@ -80,6 +86,7 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
         // which for this code example would indicate a programming error
         assert(SL_RESULT_SUCCESS == result);
         (void)result;
+        i++;
     }
 }
 
@@ -92,10 +99,10 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
     SLresult result;
     result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_STOPPED);
 //    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_RECORDING);
-    if (SL_RESULT_SUCCESS == result) {
-        recorderSize = RECORDER_FRAMES * sizeof(short);
-        recorderSR = SL_SAMPLINGRATE_16;
-    }
+//    if (SL_RESULT_SUCCESS == result) {
+//        recorderSize = RECORDER_FRAMES * sizeof(short);
+//        recorderSR = SL_SAMPLINGRATE_16;
+//    }
 }
 
 JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_createEngine
@@ -219,35 +226,41 @@ JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_createBufferQue
 JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_playBack
   (JNIEnv * env, jclass cls, jshortArray lin, jint size) {
 
-	  if (recorderSR == SL_SAMPLINGRATE_16) {
-		   unsigned i;
-		   for (i = 0; i < recorderSize; i += 2 * sizeof(short)) {
-			   recorderBuffer[i >> 2] = recorderBuffer[i >> 1];
-		   }
-		   recorderSR = SL_SAMPLINGRATE_8;
-		   recorderSize >>= 1;
-	   }
+//	  if (recorderSR == SL_SAMPLINGRATE_16) {
+//		   unsigned i;
+//		   for (i = 0; i < recorderSize; i += 2 * sizeof(short)) {
+//			   recorderBuffer[i >> 2] = recorderBuffer[i >> 1];
+//		   }
+//		   recorderSR = SL_SAMPLINGRATE_8;
+//		   recorderSize >>= 1;
+//	   }
 
 //	  nextBuffer = (short *) hello;
 //	  nextSize = sizeof(hello);
 
 //	  nextBuffer = recorderBuffer;
 //	  nextSize = recorderSize;
+//	  int i;
+//
 
-	   nextBuffer = lin;
-	   nextSize = size;
+		   nextBuffer = lin;
+		   nextSize = size;
 
-	   nextCount = 1;
-		if (nextSize > 0) {
-			// here we only enqueue one buffer because it is a long clip,
-			// but for streaming playback we would typically enqueue at least 2 buffers to start
-			SLresult result;
-			result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, nextBuffer, nextSize);
-//			if (SL_RESULT_SUCCESS != result) {
-//				return JNI_FALSE;
-//			}
-		}
+//		   nextCount = 4;
 
+		   int i;
+//		   for (i =0; i < 3; i++) {
+//				if (nextSize > 0) {
+					// here we only enqueue one buffer because it is a long clip,
+					// but for streaming playback we would typically enqueue at least 2 buffers to start
+					SLresult result;
+					result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, nextBuffer, nextSize);
+		//			if (SL_RESULT_SUCCESS != result) {
+		//				return JNI_FALSE;
+		//			}
+//				}
+//		   }
+//	  }
 }
 
 
@@ -304,6 +317,7 @@ JNIEXPORT jboolean JNICALL Java_com_example_simpleaudio_MainActivity_createAudio
 		    return JNI_TRUE;
 }
 
+
 JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_startRecording
   (JNIEnv * env, jclass cls) {
 
@@ -322,13 +336,14 @@ JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_startRec
 
 	    // enqueue an empty buffer to be filled by the recorder
 	    // (for streaming recording, we would enqueue at least 2 empty buffers to start things off)
-//	    short currentBuffer[64];
+//	    short currentBuffer[2][RECORDER_FRAMES];
 //
 //	    int i;
-//	    for (i = 0; i < 64; i++) {
+
+//	    for (i = 0; i < 10; i++) {
 	    	result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, recorderBuffer,
 	    		            RECORDER_FRAMES * sizeof(short));
-//	    	currentBuffer[i] = *recorderBuffer;
+//	    	currentBuffer[i][RECORDER_FRAMES] = *recorderBuffer;
 //	    }
 
 
@@ -355,4 +370,22 @@ JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_startRec
 		jshortArray ret = (*env)->NewShortArray(env, RECORDER_FRAMES);
 			(*env)->SetShortArrayRegion(env, ret, 0, RECORDER_FRAMES, recorderBuffer);
 		return ret;
+//
+//		jobjectArray ret = (*env)->NewObjectArray(env, RECORDER_FRAMES);
+//					(*env)->NewObjectArrayRegion(env, ret, 0, RECORDER_FRAMES, currentBuffer);
+//				return (*env)->NewObjectArray(env, RECORDER_FRAMES, currentBuffer , NULL);
+}
+
+JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_setBuffer
+  (JNIEnv * env, jclass cls, jshortArray lin, jint size) {
+
+	if (size == 1) {
+		 nextBuffer = (short *) android;
+		nextSize = sizeof(android);
+	} else {
+		    nextBuffer = lin;
+			nextSize = RECORDER_FRAMES;
+	}
+
+
 }

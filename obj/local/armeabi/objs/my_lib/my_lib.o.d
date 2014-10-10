@@ -14,7 +14,8 @@ C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/obj/local/armeabi/objs/my_lib/my_li
  C:/Users/Bridge-R2-PC2/Downloads/android-ndk32-r10-windows-x86_64/android-ndk-r10/platforms/android-19/arch-arm/usr/include/SLES/OpenSLES_AndroidConfiguration.h \
  C:/Users/Bridge-R2-PC2/Downloads/android-ndk32-r10-windows-x86_64/android-ndk-r10/platforms/android-19/arch-arm/usr/include/SLES/OpenSLES_AndroidMetadata.h \
  C:/Users/Bridge-R2-PC2/Downloads/android-ndk32-r10-windows-x86_64/android-ndk-r10/platforms/android-19/arch-arm/usr/include/SLES/OpenSLES.h \
- C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/hello_clip.h
+ C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/hello_clip.h \
+ C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/android_clip.h
 
 C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/com_example_simpleaudio_MainActivity.h:
 
@@ -45,3 +46,5 @@ C:/Users/Bridge-R2-PC2/Downloads/android-ndk32-r10-windows-x86_64/android-ndk-r1
 C:/Users/Bridge-R2-PC2/Downloads/android-ndk32-r10-windows-x86_64/android-ndk-r10/platforms/android-19/arch-arm/usr/include/SLES/OpenSLES.h:
 
 C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/hello_clip.h:
+
+C:\Users\Bridge-R2-PC2\workspace\SimpleAudio/jni/android_clip.h:
