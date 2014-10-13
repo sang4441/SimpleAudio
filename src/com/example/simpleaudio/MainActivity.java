@@ -41,8 +41,8 @@ public class MainActivity extends Activity {
             		 public void run() {
             			            	
             			  
-            			
-            			
+            			 
+            			  
             			Log.d("start", "record about to begin1");
             			lin = startRecording();
             			Log.d("start", "record about to begin2");
@@ -84,7 +84,8 @@ public class MainActivity extends Activity {
             	    			Log.d("start", "setbuffer");
                 	    		setBuffer(lin, BUFFER_FRAME_SIZE);
             	    		}
-            	    		
+            	    		 
+            	    		 
             	    		Log.d("start", "buffer Done");
             			}
             	    }

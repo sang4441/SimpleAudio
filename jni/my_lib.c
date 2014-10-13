@@ -273,7 +273,7 @@ JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_createEngine
 
 //		    struct CircularBuffer *ptr;
 		    cbInit(&CB, 64);
-//		    cbInit2(CB2, 64);
+		    cbInit2(&CB2, 64);
 }
 
 
@@ -510,7 +510,7 @@ JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_setBuffer
 
 //	static short *bufferPtr;
 //	bufferPtr = lin;
-//	ET2.value[RECORDER_FRAMES] = *bufferPtr;
-//	cbWrite2(&CB2, &ET2);
+	ET2.value[RECORDER_FRAMES] = lin;
+	cbWrite2(&CB2, &ET2);
 
 }
