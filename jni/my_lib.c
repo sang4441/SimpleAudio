@@ -1,5 +1,7 @@
 #include "com_example_simpleaudio_MainActivity.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <jni.h>
 #include <string.h>
@@ -52,6 +54,7 @@ static short sawtoothBuffer[SAWTOOTH_FRAMES];
 //#define RECORDER_FRAMES (16000 * 5)
 #define RECORDER_FRAMES (16000) //10ms
 static short recorderBuffer[RECORDER_FRAMES];
+static short bufferTmp[RECORDER_FRAMES];
 //static short recorderBuffer[160];
 
 static unsigned recorderSize = 0;
@@ -59,6 +62,7 @@ static SLmilliHertz recorderSR;
 
 // pointer and size of the next player buffer to enqueue, and number of remaining buffers
 static short *nextBuffer;
+
 static unsigned nextSize;
 static int nextCount;
 //
@@ -66,21 +70,137 @@ static const char hello[] =
 #include "hello_clip.h"
 ;
 
+typedef struct ElemTypes {
+	short value[RECORDER_FRAMES];
+} ElemType;
+
+//struct ElemTypes *ElemType;
+
+/* Circular buffer object */
+typedef struct CircularBuffers {
+    int         size;   /* maximum number of elements           */
+    int         start;  /* index of oldest element              */
+    int         end;    /* index at which to write new element  */
+    ElemType      *elems;  /* vector of elements                   */
+} CircularBuffer;
+
+CircularBuffer CB;
+ElemType ET = {0};
+//struct CircularBuffers *CircularBuffer;
+
+void cbInit(CircularBuffer *cb, int size) {
+    cb->size  = size + 1; /* include empty elem */
+    cb->start = 0;
+    cb->end   = 0;
+    cb->elems = calloc(cb->size, RECORDER_FRAMES * sizeof(short));
+}
+
+void cbFree(CircularBuffer *cb) {
+    free(cb->elems); /* OK if null */
+}
+
+int cbIsFull(CircularBuffer *cb) {
+    return (cb->end + 1) % cb->size == cb->start;
+}
+
+int cbIsEmpty(CircularBuffer *cb) {
+    return cb->end == cb->start;
+}
+
+/* Write an element, overwriting oldest element if buffer is full. App can
+   choose to avoid the overwrite by checking cbIsFull(). */
+void cbWrite(CircularBuffer *cb, ElemType *elem) {
+    cb->elems[cb->end] = *elem;
+    cb->end = (cb->end + 1) % cb->size;
+    if (cb->end == cb->start)
+        cb->start = (cb->start + 1) % cb->size; /* full, overwrite */
+}
+
+/* Read oldest element. App must ensure !cbIsEmpty() first. */
+ElemType cbRead(CircularBuffer *cb, ElemType *elem) {
+    *elem = cb->elems[cb->start];
+    cb->start = (cb->start + 1) % cb->size;
+    return *elem;
+}
+
+typedef struct ElemTypes2 {
+	short value[RECORDER_FRAMES];
+} ElemType2;
+
+//struct ElemTypes *ElemType;
+
+/* Circular buffer object */
+typedef struct CircularBuffers2 {
+    int         size;   /* maximum number of elements           */
+    int         start;  /* index of oldest element              */
+    int         end;    /* index at which to write new element  */
+    ElemType2      *elems;  /* vector of elements                   */
+} CircularBuffer2;
+
+CircularBuffer2 CB2;
+ElemType2 ET2 = {0};
+//struct CircularBuffers *CircularBuffer;
+
+void cbInit2(CircularBuffer2 *cb, int size) {
+    cb->size  = size + 1; /* include empty elem */
+    cb->start = 0;
+    cb->end   = 0;
+    cb->elems = calloc(cb->size, RECORDER_FRAMES * sizeof(short));
+}
+
+void cbFree2(CircularBuffer2 *cb) {
+    free(cb->elems); /* OK if null */
+}
+
+int cbIsFull2(CircularBuffer2 *cb) {
+    return (cb->end + 1) % cb->size == cb->start;
+}
+
+int cbIsEmpty2(CircularBuffer2 *cb) {
+    return cb->end == cb->start;
+}
+
+/* Write an element, overwriting oldest element if buffer is full. App can
+   choose to avoid the overwrite by checking cbIsFull(). */
+void cbWrite2(CircularBuffer2 *cb, ElemType2 *elem) {
+    cb->elems[cb->end] = *elem;
+    cb->end = (cb->end + 1) % cb->size;
+    if (cb->end == cb->start)
+        cb->start = (cb->start + 1) % cb->size; /* full, overwrite */
+}
+
+/* Read oldest element. App must ensure !cbIsEmpty() first. */
+short cbRead2(CircularBuffer2 *cb, ElemType2 *elem) {
+    *elem = cb->elems[cb->start];
+    cb->start = (cb->start + 1) % cb->size;
+    return *elem->value;
+}
+
 // this callback handler is called every time a buffer finishes playing
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
     assert(bq == bqPlayerBufferQueue);
     assert(NULL == context);
-    // for streaming playback, replace this test by logic to find and fill the next buffer
-    if (--nextCount > 0 && NULL != nextBuffer && 0 != nextSize) {
+//     for streaming playback, replace this test by logic to find and fill the next buffer
+
+    if (!cbIsEmpty2(&CB2)) {
+        nextBuffer = cbRead2(&CB2, &ET2);
+        nextSize = RECORDER_FRAMES;
+
         SLresult result;
-        // enqueue another buffer
-        result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, nextBuffer, nextSize);
-        // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
-        // which for this code example would indicate a programming error
-        assert(SL_RESULT_SUCCESS == result);
-        (void)result;
+		// enqueue another buffer
+		result = (*bqPlayerBufferQueue)->Enqueue(bqPlayerBufferQueue, nextBuffer, nextSize);
+		// the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
+		// which for this code example would indicate a programming error
+		assert(SL_RESULT_SUCCESS == result);
+		(void)result;
     }
+
+
+//
+//    if (NULL != nextBuffer && 0 != nextSize) {
+//
+//    }
 }
 
 void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
@@ -90,16 +210,25 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
     // for streaming recording, here we would call Enqueue to give recorder the next buffer to fill
     // but instead, this is a one-time buffer so we stop recording
     SLresult result;
-    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_STOPPED);
+//    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_STOPPED);
 //    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_RECORDING);
+
+    result = (*recorderBufferQueue)->Enqueue(recorderBufferQueue, recorderBuffer,
+    	    		            RECORDER_FRAMES * sizeof(short));
+
+
     if (SL_RESULT_SUCCESS == result) {
         recorderSize = RECORDER_FRAMES * sizeof(short);
         recorderSR = SL_SAMPLINGRATE_16;
     }
+
+    ET.value[RECORDER_FRAMES] = *recorderBuffer;
+    cbWrite(&CB, &ET);
 }
 
 JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_createEngine
   (JNIEnv * env, jclass cls) {
+
 
 	SLresult result;
 
@@ -141,6 +270,10 @@ JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_createEngine
 		                outputMixEnvironmentalReverb, &reverbSettings);
 		        (void)result;
 		    }
+
+//		    struct CircularBuffer *ptr;
+		    cbInit(&CB, 64);
+//		    cbInit2(CB2, 64);
 }
 
 
@@ -236,7 +369,6 @@ JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_playBack
 
 	   nextBuffer = lin;
 	   nextSize = size;
-
 	   nextCount = 1;
 		if (nextSize > 0) {
 			// here we only enqueue one buffer because it is a long clip,
@@ -310,12 +442,12 @@ JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_startRec
 	 SLresult result;
 
 	    // in case already recording, stop recording and clear buffer queue
-	    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_STOPPED);
-	    assert(SL_RESULT_SUCCESS == result);
-	    (void)result;
-	    result = (*recorderBufferQueue)->Clear(recorderBufferQueue);
-	    assert(SL_RESULT_SUCCESS == result);
-	    (void)result;
+//	    result = (*recorderRecord)->SetRecordState(recorderRecord, SL_RECORDSTATE_STOPPED);
+//	    assert(SL_RESULT_SUCCESS == result);
+//	    (void)result;
+//	    result = (*recorderBufferQueue)->Clear(recorderBufferQueue);
+//	    assert(SL_RESULT_SUCCESS == result);
+//	    (void)result;
 
 	    // the buffer is not valid for playback yet
 	    recorderSize = 0;
@@ -352,7 +484,33 @@ JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_startRec
 	//	    	    return ret;
 
 
+		ET.value[RECORDER_FRAMES] = *recorderBuffer;
+		cbWrite(&CB, &ET);
+
 		jshortArray ret = (*env)->NewShortArray(env, RECORDER_FRAMES);
 			(*env)->SetShortArrayRegion(env, ret, 0, RECORDER_FRAMES, recorderBuffer);
 		return ret;
+}
+
+JNIEXPORT jshortArray JNICALL Java_com_example_simpleaudio_MainActivity_getBuffer
+  (JNIEnv * env, jclass cls) {
+
+	if (!cbIsEmpty(&CB)) {
+		*bufferTmp = cbRead(&CB, &ET).value[RECORDER_FRAMES];
+	   return bufferTmp;
+//	        nextSize = RECORDER_FRAMES;
+	}
+//	else {
+//		return short[]
+//	}
+
+}
+JNIEXPORT void JNICALL Java_com_example_simpleaudio_MainActivity_setBuffer
+  (JNIEnv * env, jclass cls, jshortArray lin, jint size) {
+
+//	static short *bufferPtr;
+//	bufferPtr = lin;
+//	ET2.value[RECORDER_FRAMES] = *bufferPtr;
+//	cbWrite2(&CB2, &ET2);
+
 }

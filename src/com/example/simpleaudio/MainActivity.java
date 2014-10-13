@@ -25,55 +25,71 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         
-        createEngine();
-        createAudioRecorder();
-		
+        createEngine();          
+        createAudioRecorder();		
 		createBufferQueueAudioPlayer();
-        
+//        
         
         ((Button) findViewById(R.id.start)).setOnClickListener(new OnClickListener() {
             public void onClick(View view) {
             	
             	isSendering = true;
             	Log.d("start", "start button");
-            	
+            		
             	Thread t = new Thread() {
             		@Override
             		 public void run() {
+            			            	
+            			  
             			
             			
+            			Log.d("start", "record about to begin1");
+            			lin = startRecording();
+            			Log.d("start", "record about to begin2");
+            			playBack(lin, BUFFER_FRAME_SIZE);
+            			           			
+            			
+            			
+            			
+            			Log.d("start", "record about to begin3");
             	    	while (isSendering) {
             	    		Log.d("start", "record begin");	
             	    		
 //            	    		for (int i = 0; i < 100; i++) {
-            	    			lin = startRecording();
+//            	    			lin = startRecording();
 //            	    		}
             	    		
-            	    		try {
-								Thread.sleep(2000);
-							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}	
+//            	    		try {
+//								Thread.sleep(2000);
+//							} catch (InterruptedException e) {
+//								// TODO Auto-generated catch block
+//								e.printStackTrace();
+//							}	
             	    		
 //            	    		for (int i = 0, j = 0; i < 64; i++, j+=2) {
 //            	    			outbuffer[j] = outbuffer[j+1] = inbuffer[i];
 //            	    		}
-            	    		Log.d("start", "got data, ready to play");
-            	    		playBack(lin, BUFFER_FRAME_SIZE);
+            	    		
+            	    		  
 //            	    		for (int i = 0; i < 100; i++) {
 //            	    			lin[i] = startRecording();
             	    			
-//            	    		}
+//            	    		} 
             	    		
-            	    			
-
+            	    		
+            	    		
+            	    		Log.d("start", "getbuffer");
+            	    		lin = getBuffer();
+            	    		if (lin != null) {
+            	    			Log.d("start", "setbuffer");
+                	    		setBuffer(lin, BUFFER_FRAME_SIZE);
+            	    		}
+            	    		
+            	    		Log.d("start", "buffer Done");
             			}
             	    }
             	};
-            	t.start();
-
-                  	
+            	t.start();                 	
             }
         });
         
@@ -121,5 +137,9 @@ public class MainActivity extends Activity {
     public static native void createBufferQueueAudioPlayer();
     public static native void playBack(short[] lin, int decodeSize);
     public static native boolean createAudioRecorder();
-    public static native short[] startRecording();
+    public static native short[] startRecording(); 
+    public static native short[] getBuffer();
+    public static native void setBuffer(short[] lin, int decodeSize);
+    
+    
 }
